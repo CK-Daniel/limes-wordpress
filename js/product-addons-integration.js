@@ -92,6 +92,7 @@ jQuery(document).ready(function($) {
                 basePrice = parseFloat($basePrice.data("base-price")) || 0;
             }
             
+            
             // Default to base price
             var adjustedPrice = basePrice;
             
@@ -102,8 +103,8 @@ jQuery(document).ready(function($) {
                 var rollLength = parseFloat($("#roll_length").val()) || 0;
                 
                 if (coverage > 0 && rollWidth > 0 && rollLength > 0) {
-                    // Roll dimensions are already in meters from ACF
-                    var rollArea = rollWidth * rollLength;
+                    // Roll dimensions are in centimeters from ACF, convert to square meters
+                    var rollArea = (rollWidth / 100) * (rollLength / 100);
                     if (rollArea < 1) rollArea = 1;
                     
                     // Add 5% margin
@@ -265,6 +266,11 @@ jQuery(document).ready(function($) {
                 // Calculate the dimensional price
                 var dimensionalPrice = calculateDimensionalPrice();
                 
+                // Also trigger main.js calculation to ensure synchronization
+                if (typeof window.recalcFinalPrice === 'function') {
+                    window.recalcFinalPrice();
+                }
+                
                 // Store the calculated price for addons to use
                 $cartForm.attr('data-price', dimensionalPrice);
                 
@@ -279,8 +285,31 @@ jQuery(document).ready(function($) {
                         dimensionalPrice.toFixed(2) + ' ₪'
                     );
                     
+                    // Also update the product line item price
+                    $('.product-addon-totals li:first-child .wc-pao-col2 .amount').html(
+                        dimensionalPrice.toFixed(2) + ' ₪'
+                    );
+                    
+                    // Update the final price in the subtotal line
+                    $('.product-addon-totals .wc-pao-subtotal-line .price').html(
+                        '<span class="woocommerce-Price-amount amount"><bdi>' + 
+                        dimensionalPrice.toFixed(2) + '&nbsp;<span class="woocommerce-Price-currencySymbol">₪</span></bdi></span>'
+                    );
+                    
                     // Trigger the official addon totals update
                     $(document.body).trigger('update_addon_totals');
+                    
+                    // Force our price after WooCommerce updates (with small delay)
+                    setTimeout(function() {
+                        // Re-update with our calculated price to override WooCommerce
+                        $('.product-addon-totals li:first-child .wc-pao-col2 .amount').html(
+                            dimensionalPrice.toFixed(2) + ' ₪'
+                        );
+                        $('.product-addon-totals .wc-pao-subtotal-line .price').html(
+                            '<span class="woocommerce-Price-amount amount"><bdi>' + 
+                            dimensionalPrice.toFixed(2) + '&nbsp;<span class="woocommerce-Price-currencySymbol">₪</span></bdi></span>'
+                        );
+                    }, 100);
                 }
                 // If using our custom addon totals
                 else if ($customAddonTotals.length > 0) {

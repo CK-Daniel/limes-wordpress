@@ -213,20 +213,20 @@ function my_custom_dimensions_price_adjustment( $cart ) {
 				// Add 5% extra margin to the required coverage area
 				$coverage_with_margin_sqm = $coverage_needed_sqm * 1.05;
 
-				// Get roll dimensions from ACF (stored in meters)
-				$roll_width_m  = (float) get_field( 'roll_width', $product_id_for_acf );
-				$roll_length_m = (float) get_field( 'roll_length', $product_id_for_acf );
+				// Get roll dimensions from ACF (stored in centimeters)
+				$roll_width_cm  = (float) get_field( 'roll_width', $product_id_for_acf );
+				$roll_length_cm = (float) get_field( 'roll_length', $product_id_for_acf );
 
-				// Calculate area of one roll in m² (dimensions already in meters)
+				// Calculate area of one roll in m² (convert cm to meters)
 				$roll_area_sqm = 0;
-				if ( $roll_width_m > 0 && $roll_length_m > 0 ) {
-					$roll_area_sqm = $roll_width_m * $roll_length_m;
+				if ( $roll_width_cm > 0 && $roll_length_cm > 0 ) {
+					$roll_area_sqm = ($roll_width_cm / 100) * ($roll_length_cm / 100);
 				}
 
 				// Determine how many rolls are needed (ceiling) based on coverage WITH margin
 				if ( $roll_area_sqm <= 0 ) {
 					$rolls_needed = 1; // Fallback: if roll dimensions are invalid, assume 1 roll needed
-					wc_get_logger()->warning( sprintf('Product ID %d: Invalid roll dimensions (W: %s, L: %s) or area (%s). Falling back to 1 roll.', $product_id_for_acf, $roll_width_m, $roll_length_m, $roll_area_sqm), array( 'source' => 'my-custom-pricing' ) );
+					wc_get_logger()->warning( sprintf('Product ID %d: Invalid roll dimensions (W: %s, L: %s) or area (%s). Falling back to 1 roll.', $product_id_for_acf, $roll_width_cm, $roll_length_cm, $roll_area_sqm), array( 'source' => 'my-custom-pricing' ) );
 				} else {
 					// Use the coverage with margin to calculate rolls needed
 					$rolls_needed = ceil( $coverage_with_margin_sqm / $roll_area_sqm );

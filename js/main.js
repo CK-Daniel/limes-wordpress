@@ -998,8 +998,8 @@ jQuery(document).ready(function ($) {
 		// Calculate the actual product price
 		if (isRollProduct && $prodCoverage.length > 0 && coverage > 0) {
 			if (rollWidth > 0 && rollLength > 0) {
-				// Roll dimensions are already in meters from ACF
-				var rollAreaPerUnit = rollWidth * rollLength; 
+				// Roll dimensions are in centimeters from ACF, convert to square meters
+				var rollAreaPerUnit = (rollWidth / 100) * (rollLength / 100); 
 				if (rollAreaPerUnit <= 0) rollAreaPerUnit = 1; 
 				var coverage_with_margin = coverage * 1.05;
 				var rollsNeeded = Math.ceil(coverage_with_margin / rollAreaPerUnit);
