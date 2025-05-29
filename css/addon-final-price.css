@@ -1,0 +1,39 @@
+/**
+ * Final Price Styling for Addon Section
+ */
+
+/* Style the final price line in addon totals */
+.wc-pao-subtotal-line .price {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Add some spacing before the price amount */
+.wc-pao-subtotal-line .price .woocommerce-Price-amount {
+    margin-right: 5px;
+}
+
+/* Make the "מחיר סופי" text slightly smaller than the price */
+.wc-pao-subtotal-line .price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+/* For the subtotal line that has the prefix */
+.wc-pao-subtotal-line .price:before {
+    content: '';
+}
+
+/* Ensure proper alignment in the addon totals table */
+.product-addon-totals .wc-pao-subtotal-line {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+/* Bold the final price amount */
+.wc-pao-subtotal-line .price .amount {
+    font-weight: 700;
+}

@@ -1,0 +1,465 @@
+/* Custom Edits CSS */
+
+/* Product Addon Totals Styling - Target both official and custom containers */
+.product-addon-totals,
+.wc-pao-addon-totals {
+	margin: 20px 0;
+	padding: 15px;
+	border: 1px solid #d3d3d3;
+	border-radius: 8px;
+	background-color: #f9f9f9;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+	font-family: inherit;
+}
+
+.product-addon-totals ul,
+.wc-pao-addon-totals ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.product-addon-totals ul li,
+.wc-pao-addon-totals ul li {
+	display: flex;
+	justify-content: space-between;
+	padding: 8px 0;
+	border-bottom: 1px dashed #e0e0e0;
+	align-items: center;
+}
+
+.product-addon-totals ul li:last-child,
+.wc-pao-addon-totals ul li:last-child {
+	border-bottom: none;
+}
+
+.product-addon-totals .wc-pao-col1,
+.wc-pao-addon-totals .wc-pao-col1 {
+	text-align: right;
+	flex: 1;
+	font-size: 14px;
+}
+
+.product-addon-totals .wc-pao-col2,
+.wc-pao-addon-totals .wc-pao-col2 {
+	text-align: left;
+	padding-right: 10px;
+	font-size: 14px;
+}
+
+.product-addon-totals .wc-pao-subtotal-line,
+.wc-pao-addon-totals .wc-pao-subtotal-line {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 2px solid #ccc;
+	font-weight: bold;
+}
+
+.product-addon-totals .wc-pao-subtotal-line p.price,
+.wc-pao-addon-totals .wc-pao-subtotal-line p.price,
+.wc-pao-addon-totals .wc-pao-subtotal-total {
+	margin: 0;
+	font-size: 1.3em;
+	color: #333;
+	font-weight: bold;
+}
+
+.product-addon-totals .wc-pao-subtotal-line p.price:before,
+.wc-pao-addon-totals .wc-pao-subtotal-line p.price:before {
+	content: "מחיר סופי: ";
+	font-weight: bold;
+	color: #333;
+}
+
+/* RTL adjustments for Hebrew */
+.rtl .product-addon-totals .wc-pao-col1,
+.rtl .wc-pao-addon-totals .wc-pao-col1 {
+	text-align: right;
+}
+
+.rtl .product-addon-totals .wc-pao-col2,
+.rtl .wc-pao-addon-totals .wc-pao-col2 {
+	text-align: left;
+	padding-right: 0;
+	padding-left: 10px;
+}
+
+/* Make the addon totals stand out more */
+.product-addon-totals .wc-pao-col1 strong,
+.wc-pao-addon-totals .wc-pao-col1 strong,
+#product-addons-total .wc-pao-col1 strong {
+	font-weight: 600;
+}
+
+.product-addon-totals .wc-pao-col2 .amount,
+.wc-pao-addon-totals .wc-pao-col2 .amount,
+#product-addons-total .wc-pao-col2 .amount {
+	font-weight: 600;
+}
+
+/* Ensure the product addons total container is always visible */
+#product-addons-total {
+	display: block !important;
+	margin-top: 0px;
+}
+
+/* Add some spacing between the addon totals and other elements */
+.wc-pao-addons-container + .product-addon-totals,
+.wc-pao-addons-container + .wc-pao-addon-totals {
+	margin-top: 25px;
+}
+
+.product-addon-totals + .wrap_cart_btns,
+.wc-pao-addon-totals + .wrap_cart_btns {
+	margin-top: 25px;
+}
+@media (max-width: 975px ){
+	section.product .parts {
+		position: relative;
+		flex-direction: column-reverse;
+		display: flex;
+	}
+}
+
+
+/* Make price text transparent when dimensions are required but invalid */
+form.cart.dimensions-required.price-invalid .wc-pao-subtotal-line p.price {
+	opacity: 0;
+	transition: opacity 0.3s ease-in-out; /* Optional: Add smooth transition */
+}
+
+/* Ensure price is visible when valid */
+form.cart.dimensions-required:not(.price-invalid) .wc-pao-subtotal-line p.price {
+	opacity: 1;
+}
+
+/* Add placeholder text when price is hidden (invalid dimensions) */
+form.cart.dimensions-required.price-invalid .wc-pao-subtotal-line p.price::after {
+	content: " (הזן מידות)"; /* Placeholder text */
+	display: inline-block; /* Or block if needed */
+	margin-right: 5px; /* Adjust spacing */
+	font-style: italic;
+	opacity: 0.7; /* Style the placeholder */
+	/* Ensure placeholder has opacity 1 even if parent is 0 */
+	opacity: 1 !important; /* Override parent opacity for the placeholder */
+	vertical-align: middle; /* Align with potential hidden text */
+}
+
+/* Style for the always visible final price label */
+.always-visible-final-price-label {
+	font-weight: bold;
+	color: #333;
+	margin: 20px 0 5px;
+	font-size: 1.3em;
+	display: block;
+	text-align: right;
+	direction: rtl;
+}
+
+/* Hide the original "מחיר סופי:" text since we're showing it separately */
+.product-addon-totals .wc-pao-subtotal-line p.price:before,
+.wc-pao-addon-totals .wc-pao-subtotal-line p.price:before,
+#product-addons-total .wc-pao-subtotal-line p.price:before {
+	content: "";
+	display: none;
+}
+
+
+.woocommerce-error {
+	margin: 0px 0 20px 0;
+}
+
+
+section.product div.product-addon-totals {
+	margin-bottom: 20px;
+	border: 0px;
+	margin-top: 0px;
+	padding-top: 0px;
+}
+
+div.product-addon-totals .wc-pao-subtotal-line {
+	justify-content: flex-end;
+	border-top: 0px solid #eee;
+	padding: 10px 0;
+	margin-top: 0px;
+	padding-left: 10px;
+}
+
+
+.rtl .product-addon-totals .wc-pao-col2, .rtl .wc-pao-addon-totals .wc-pao-col2 {
+	text-align: left;
+	padding-right: 0;
+	padding-left: 10px;
+	font-size: 18px;
+}
+
+.product-addon-totals .wc-pao-col1 strong, .wc-pao-addon-totals .wc-pao-col1 strong, #product-addons-total .wc-pao-col1 strong {
+	font-weight: 600;
+	font-size: 18px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+* CSS to improve display of roll product price calculation
+*/
+
+/* Base styles for dimension-required products */
+.dimensions-required .always-visible-final-price-label {
+	display: block !important;
+	font-weight: bold;
+	margin-top: 10px;
+	margin-bottom: 5px;
+	font-size: 1.1em;
+	color: #333;
+}
+
+/* Hide the price when dimensions are invalid/incomplete */
+.dimensions-required.price-invalid .always-visible-final-price-label,
+.dimensions-required.price-invalid .woocommerce-variation-price,
+.dimensions-required.price-invalid #product-addons-total .product-addon-totals {
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+/* Add visual indicator that both dimensions are needed */
+.dimensions-required.price-invalid:after {
+	content: "נא למלא את כל השדות הנדרשים להצגת המחיר";
+	display: block;
+	text-align: center;
+	color: #777;
+	font-size: 0.9em;
+	margin: 5px 0;
+	font-style: italic;
+}
+
+/* Hide duplicate price labels */
+.dimensions-required .price_label {
+	display: none !important;
+}
+
+/* Ensure the roll product's final price display is nicely positioned */
+.wrap_cart_btns .always-visible-final-price-label {
+	margin-right: 10px;
+	display: inline-block;
+}
+
+/* Highlight validation messages */
+.validation_tip .not-valid {
+	color: #e2401c;
+	font-weight: bold;
+}
+
+/* Improve dimensions input styling */
+.wrap_dimensions .wrap_dim .wrap_input input {
+	border: 1px solid #ddd;
+	padding: 8px;
+	border-radius: 4px;
+}
+
+.wrap_dimensions .wrap_dim .wrap_input input.not-valid {
+	border-color: #e2401c;
+	background-color: rgba(226, 64, 28, 0.05);
+}
+
+/* Coverage input (m²) */
+#prod_coverage {
+	padding: 8px;
+	width: 100%;
+	max-width: 200px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+#prod_coverage:focus {
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+	outline: none;
+}
+
+/* Read-only "rolls needed" field */
+#prod_rolls_needed {
+	background-color: #f9f9f9;
+	border: 1px solid #ddd;
+	padding: 8px;
+	border-radius: 4px;
+	width: 100%;
+	max-width: 200px;
+	transition: background-color 0.5s ease;
+}
+
+/* Animation for rolls needed changes */
+@keyframes highlight {
+	0% { background-color: rgba(255, 255, 100, 0.3); }
+	100% { background-color: #f9f9f9; }
+}
+
+#prod_rolls_needed.changed {
+	animation: highlight 1s ease-out;
+}
+
+/* Add-to-cart button styling when enabled */
+.single_add_to_cart_button:not(.disabled),
+.add_to_cart_trigger_btn:not(.disabled) {
+	background-color: #7e624d !important;
+	color: white !important;
+	cursor: pointer !important;
+}
+
+/* Tooltip styling for dimensions */
+.wrap_dim label .must {
+	color: #e2401c;
+	font-style: italic;
+	font-size: 0.9em;
+}
+
+/* Make sure final price is visible for products with variation selections */
+.woocommerce-variation-price {
+	margin-bottom: 15px;
+}
+
+/* Improve mobile responsiveness */
+@media (max-width: 768px) {
+	.wrap_dimensions .wrap_dim {
+		margin-bottom: 15px;
+	}
+
+	#prod_coverage,
+	#prod_rolls_needed {
+		max-width: 100%;
+	}
+
+	.always-visible-final-price-label {
+		font-size: 1em;
+	}
+}
+
+/* Price validation and hiding styles */
+/* Hide addon container only when form has price-invalid class */
+.cart.price-invalid .wc-pao-addons-container {
+	display: none !important;
+}
+
+/* Show addon container when form is valid and fields are complete */
+.cart.addon-section-visible .wc-pao-addons-container,
+.cart.required-fields-complete .wc-pao-addons-container {
+	display: block !important;
+}
+
+.cart.addon-section-visible #product-addons-total,
+.cart.required-fields-complete #product-addons-total {
+	display: block !important;
+}
+
+.cart.addon-section-visible .always-visible-final-price-label,
+.cart.required-fields-complete .always-visible-final-price-label {
+	display: block !important;
+}
+
+/* Validation feedback styles */
+.wrap_input input.not-valid {
+	border-color: #e74c3c !important;
+	box-shadow: 0 0 5px rgba(231, 76, 60, 0.3) !important;
+}
+
+/* Hide variation price for roll products since we show final price in addons section */
+.product-type-roll .woocommerce-variation-price,
+.product-type-roll .single_variation .woocommerce-variation-price {
+	display: none !important;
+}
+
+/* Hide variation price for all products with dimensions to avoid duplicate pricing */
+.dimensions-required .woocommerce-variation-price,
+form.dimensions-required .woocommerce-variation-price,
+form.dimensions-required .single_variation .woocommerce-variation-price {
+	display: none !important;
+}
+
+/* Additional targeting for roll products specifically */
+form.cart[data-product-type="roll"] .woocommerce-variation-price,
+form.cart[data-product-type="roll"] .single_variation .woocommerce-variation-price,
+.wc-pao-addons-container[data-product-type="roll"] ~ .single_variation_wrap .woocommerce-variation-price {
+	display: none !important;
+}
+
+.limes-price-verified {
+	font-family: 'Assistant', sans-serif;
+	font-weight: 600;
+	font-size: 18px;
+}
+
+.wrap_add_cart_btn, .wrap_add_cart_btn button {
+	background-color: #7e624d !important;
+
+}
+
+.limes-addon-line , .price {
+	font-size: 18px;
+}
+
+.sticky-wrapper {
+	width: 563px;
+	position: relative;
+}
+
+section.product .parts .part:first-child {
+	padding-top: 50px;
+	width: 28.5%;
+	padding-right: 45px;
+	transition: 400ms;
+	width: 100%;
+	position: absolute;
+	top: 0px;
+	z-index: 999;
+	max-width: 547px;
+	background: white;
+	padding-bottom: 27px;
+}
+
+.wrap_attrs .flex_attrs .wrap_item .wrap_img, .wrap_attrs .flex_attrs .wrap_item .wrap_img img {
+	max-width: 39px;
+	max-height: 39px;
+}
+
+
+.product_tabs_sec, .product_bottom_content, .contact-bottom {
+	padding-right: 600px;
+	padding-left: 30px;
+}
+
+
+@media (max-width: 975px) {
+
+	.sticky-wrapper {
+		width: 100%;
+		position: relative;
+		height: auto;
+	}
+
+	section.product .parts .part:first-child {
+		padding: 020px;
+		width: 100% !important;
+		max-width: 100%;
+		position: relative;
+		height: fit-content;
+	}
+
+	.product_tabs_sec, .product_bottom_content, .contact-bottom {
+		padding-right: 20px;
+		padding-left: 20px;
+	}
+}

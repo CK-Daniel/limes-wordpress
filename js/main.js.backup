@@ -1,0 +1,660 @@
+/*************************************************
+ * GLOBAL VARIABLES & PARAMS
+ *************************************************/
+let params = new URLSearchParams(document.location.search);
+let min_price_param = parseInt(params.get("min_price"), 10);
+let max_price_param = parseInt(params.get("max_price"), 10);
+
+var window_width = jQuery(window).width();
+
+// Global configuration for addon loading overlay
+window.LIMES_ADDON_LOADING_DURATION = 1500; // Default 1.5 seconds (1500ms)
+// To change the duration, add this to your theme's custom JS:
+// window.LIMES_ADDON_LOADING_DURATION = 1000; // For 1 second
+// window.LIMES_ADDON_LOADING_DURATION = 2000; // For 2 seconds
+// window.LIMES_ADDON_LOADING_DURATION = 3000; // For 3 seconds
+
+/*************************************************
+ * PLUS / MINUS QUANTITY LISTENERS
+ *************************************************/
+function plus_minns_listeners() {
+	jQuery(".wrapper-quantity .button-minus").off('click').on("click", function () {
+		var qty_input = jQuery(this).closest(".wrapper-quantity").find(".input-text.qty");
+		if (!qty_input.length) qty_input = jQuery(this).closest(".wrapper-quantity").find(".input-text"); // Fallback
+		var cur_num = parseInt(jQuery(qty_input).val(), 10);
+		if (isNaN(cur_num)) cur_num = 1; // Handle non-numeric case
+		cur_num--;
+		if (cur_num < 1) cur_num = 1; // Or reference min attribute if present
+		jQuery(qty_input).val(cur_num).trigger('change'); // Trigger change for WooCommerce
+		jQuery('button[name="update_cart"]').prop("disabled", false);
+	});
+	jQuery(".wrapper-quantity .button-plus").off('click').on("click", function () {
+		var qty_input = jQuery(this).closest(".wrapper-quantity").find(".input-text.qty");
+		if (!qty_input.length) qty_input = jQuery(this).closest(".wrapper-quantity").find(".input-text"); // Fallback
+		var cur_num = parseInt(jQuery(qty_input).val(), 10);
+		if (isNaN(cur_num)) cur_num = 0; // Handle non-numeric case
+		cur_num++;
+		var max_val = jQuery(qty_input).attr('max');
+		if (typeof max_val !== 'undefined' && max_val !== false && cur_num > parseInt(max_val, 10) ) {
+			cur_num = parseInt(max_val, 10);
+		}
+		jQuery(qty_input).val(cur_num).trigger('change'); // Trigger change for WooCommerce
+		jQuery('button[name="update_cart"]').prop("disabled", false);
+	});
+}
+
+/*************************************************
+ * CHECK OFFSET (Handles sticky near footer)
+ *************************************************/
+function checkOffset() {
+	var $socialFloat = jQuery("#social-float");
+	var $footer = jQuery("footer");
+
+	if ($socialFloat.length && $footer.length && $footer.offset()) { // Ensure elements and offset exist
+		if (
+			$socialFloat.offset().top + $socialFloat.height() >=
+			$footer.offset().top - 10
+		) {
+			jQuery("body").addClass("product_sticky_mode");
+		}
+		if (
+			jQuery(document).scrollTop() + window.innerHeight <
+			$footer.offset().top
+		) {
+			jQuery("body").removeClass("product_sticky_mode"); // Should remove the class added above
+		}
+	}
+}
+
+/*************************************************
+ * GET FIELD VALUE BY NAME (For CF7 forms, etc.)
+ *************************************************/
+function getFieldValueByName(ar, name) {
+	var result = "";
+	if (Array.isArray(ar)) {
+		ar.forEach(function (item) {
+			if (item.name == name) result = item.value;
+		});
+	}
+	return result;
+}
+
+/*************************************************
+ * updateAddonDisplay()
+ * Overwrites the .product-addon-totals lines with
+ * correct per–add-on fees & final price.
+ * NOTE: We'll skip lines if fee=0 & label is empty
+ *************************************************/
+let isUpdatingDisplay = false;
+let updateQueue = null;
+let lastUpdateTimestamp = 0;
+
+function updateAddonDisplay(productPrice, addonBreakdown, finalPrice) {
+	// Queue the update to prevent conflicts with addon plugin
+	if (updateQueue) {
+		clearTimeout(updateQueue);
+	}
+	
+	// Store the latest values
+	const updateData = {
+		productPrice: parseFloat(productPrice) || 0,
+		addonBreakdown: addonBreakdown,
+		finalPrice: parseFloat(finalPrice) || 0,
+		timestamp: Date.now()
+	};
+	
+	// Only process if this is a newer update
+	if (updateData.timestamp <= lastUpdateTimestamp) {
+		return;
+	}
+	
+	updateQueue = setTimeout(function() {
+		performAddonDisplayUpdate(updateData);
+	}, 50); // Small delay to batch updates
+}
+
+function performAddonDisplayUpdate(updateData) {
+	let $list = jQuery(".product-addon-totals ul");
+	if (!$list.length) return;
+	
+	// Prevent re-entry
+	if (isUpdatingDisplay) return;
+	isUpdatingDisplay = true;
+	
+	// Store current timestamp
+	lastUpdateTimestamp = updateData.timestamp;
+	
+	// Temporarily disable MutationObserver if it exists
+	if (window.addonMutationObserver) {
+		window.addonMutationObserver.disconnect();
+	}
+	
+	// Add a class to indicate we're updating
+	$list.addClass('limes-updating');
+	
+	// Wrap updates in requestAnimationFrame for smoother rendering
+	requestAnimationFrame(function() {
+		// Check if official addon lines already exist
+		const hasOfficialAddonLines = $list.find("li .wc-pao-addon-name").length > 0;
+		
+		// Remove only our custom addon lines (not official ones)
+		$list.find("li.limes-addon-line").remove();
+
+		// Update base product price
+		$list
+			.find("li:first-child .wc-pao-col2 .amount")
+			.html(updateData.productPrice.toFixed(2) + " <span class='woocommerce-Price-currencySymbol'>₪</span>");
+
+		// Only add our custom addon lines if official ones don't exist
+		if (!hasOfficialAddonLines && Array.isArray(updateData.addonBreakdown)) {
+			updateData.addonBreakdown.forEach(function (ad) {
+				let label = ad.label ? String(ad.label).trim() : "";
+				let fee = parseFloat(ad.fee) || 0;
+
+				if (fee === 0 && label === "") {
+					return;
+				}
+				
+				let addonHTML = `
+<li class="wc-pao-addon-total-line limes-addon-line"> 
+<div class="wc-pao-col1">
+<strong>${label}</strong>
+</div>
+<div class="wc-pao-col2">
+<span class="price"><span class="woocommerce-Price-amount amount">${fee.toFixed(2)}</span> <span class="woocommerce-Price-currencySymbol">₪</span></span>
+</div>
+</li>`;
+				$list.find("li.wc-pao-subtotal-line").before(addonHTML);
+			});
+		}
+
+		// Update final price
+		$list
+			.find("li.wc-pao-subtotal-line .price")
+			.html("<span class='woocommerce-Price-amount amount'>" + updateData.finalPrice.toFixed(2) + "</span> <span class='woocommerce-Price-currencySymbol'>₪</span>");
+
+		// Also update the "Final Price" label if it exists separately
+		jQuery('.wrap_cart_btns.has_addons .price.woocommerce-Price-amount.amount').html(updateData.finalPrice.toFixed(2) + " <span class='woocommerce-Price-currencySymbol'>₪</span>");
+		
+		// Update any other price displays that might exist
+		jQuery('#product-addons-total .wc-pao-subtotal-line .price').html(
+			"<span class='woocommerce-Price-amount amount'>" + updateData.finalPrice.toFixed(2) + "</span> <span class='woocommerce-Price-currencySymbol'>₪</span>"
+		);
+		
+		// Remove updating class
+		$list.removeClass('limes-updating');
+		
+		// Re-enable MutationObserver after a delay
+		setTimeout(function() {
+			isUpdatingDisplay = false;
+			if (window.addonMutationObserver && window.addonTotalsEl) {
+				window.addonMutationObserver.observe(window.addonTotalsEl, { 
+					childList: true, 
+					subtree: true, 
+					characterData: true 
+				});
+			}
+		}, 100);
+	});
+}
+
+
+/*************************************************
+ * FIRST DOCUMENT.READY (General UI code)
+ *************************************************/
+jQuery(document).ready(function ($) {
+	if ($(".wrap_cart_btns.has_addons").length) {
+		if (!$(".wrap_cart_btns.has_addons .price_label_text").length) { // Avoid duplicating label
+			$(".wrap_cart_btns.has_addons").append(
+				'<span class="price_label price_label_text">מחיר סופי: </span><span class="price woocommerce-Price-amount amount">' + (0).toFixed(2) + ' <span class="woocommerce-Price-currencySymbol">₪</span></span>' // Initial price
+			);
+		}
+	}
+
+	$("body").on("click", ".single_add_to_cart_button", function (e) {
+		var prod_width_input = jQuery(".wrap_dimensions .wrap_dim .wrap_input input#prod_width");
+		var prod_height_input = jQuery(".wrap_dimensions .wrap_dim .wrap_input input#prod_height");
+
+		// Validate only if the fields are visible and part of a non-roll product implicitly
+		// The recalcFinalPrice function will handle enabling/disabling the button more accurately.
+		// This validation can be a visual cue but shouldn't prevent click if button isn't disabled.
+		if (prod_width_input.is(':visible') && prod_width_input.length > 0 && prod_width_input.val().trim() === "") {
+			prod_width_input.addClass("not-valid");
+			// e.preventDefault(); // Only prevent if truly invalid and button was somehow not disabled
+		}
+		if (prod_height_input.is(':visible') && prod_height_input.length > 0 && prod_height_input.val().trim() === "") {
+			prod_height_input.addClass("not-valid");
+			// e.preventDefault();
+		}
+	});
+
+	$(".wrap_dimensions .wrap_dim .wrap_input input#prod_width").on(
+		"focus input", // Also remove on input
+		function () {
+			jQuery(this).removeClass("not-valid");
+		}
+	);
+	$(".wrap_dimensions .wrap_dim .wrap_input input#prod_height").on(
+		"focus input", // Also remove on input
+		function () {
+			jQuery(this).removeClass("not-valid");
+		}
+	);
+
+	plus_minns_listeners();
+	jQuery(document.body).on(
+		"removed_from_cart updated_cart_totals wc_cart_emptied updated_wc_div", // Added more common WC events
+		function () {
+			plus_minns_listeners();
+		}
+	);
+
+	var onScroll = function() { // Ensure onScroll is defined before use
+		var distanceY = window.pageYOffset || document.documentElement.scrollTop;
+		var shrinkOn = 30;
+		var $header = $("header"); // Cache header
+		if ($header.length) {
+			if (distanceY > shrinkOn) {
+				$header.addClass("scrolled");
+			} else {
+				$header.removeClass("scrolled");
+			}
+		}
+	};
+	window.addEventListener("scroll", onScroll);
+	onScroll(); // Call on load
+
+	if ($.fn.simpleMobileMenu) {
+		$(".mobile_menu").simpleMobileMenu({
+			menuStyle: "slide",
+		});
+	}
+
+	document.addEventListener(
+		"wpcf7mailsent",
+		function (event) {
+			if(event.detail && event.detail.inputs){
+				var inputs = event.detail.inputs;
+				var thankyouPage = getFieldValueByName(inputs, "thankyou-page");
+				if (thankyouPage) window.location = thankyouPage;
+			}
+		},
+		false
+	);
+
+	if ($("#tabs-nav li").length) {
+		$("#tabs-nav li:first-child").addClass("active");
+		$(".tab-content").hide().first().show(); // Chain methods
+		$("#tabs-nav li").click(function (e) {
+			e.preventDefault();
+			var $this = $(this);
+			if ($this.hasClass('active')) return; // Do nothing if already active
+
+			$("#tabs-nav li").removeClass("active");
+			$this.addClass("active");
+			$(".tab-content").hide();
+			var activeTab = $this.find("a").attr("href");
+			$(activeTab).fadeIn();
+		});
+	}
+
+	$(".set > a").on("click", function (e) {
+		e.preventDefault();
+		var $this = $(this);
+		var $icon = $this.find("i");
+		var $content = $this.siblings(".content");
+
+		if ($this.hasClass("active")) {
+			$this.removeClass("active");
+			$content.slideUp(200);
+			$icon.removeClass("fa-minus").addClass("fa-plus");
+		} else {
+			$(".set > a.active").find("i").removeClass("fa-minus").addClass("fa-plus");
+			$(".set > a.active").removeClass("active").siblings(".content").slideUp(200);
+
+			$this.addClass("active");
+			$content.slideDown(200);
+			$icon.removeClass("fa-plus").addClass("fa-minus");
+		}
+	});
+
+	$('.wrap_attrs .flex_attrs .wrap_item input[type="radio"]').change(function () {
+		var $thisRadio = $(this);
+		var term_slug = $thisRadio.data("slug");
+		$thisRadio.closest('.flex_attrs').find('.wrap_item.active').removeClass("active");
+		$thisRadio.parent().addClass("active");
+
+		var $selectPaColor = $("#pa_color");
+		if ($selectPaColor.length) {
+			$selectPaColor.val(term_slug).trigger("change"); // Triggers WooCommerce logic
+		}
+	});
+	// Set initial active state for selected color attribute
+	var $selectedColorRadio = $('.wrap_attrs .flex_attrs .wrap_item input[type="radio"]:checked');
+	if ($selectedColorRadio.length) {
+		$selectedColorRadio.parent().addClass("active");
+	}
+
+	$(".add_to_cart_trigger_btn").on("click", function (e) {
+		e.preventDefault();
+		$(this).closest(".single_variation_wrap").find(".single_add_to_cart_button").trigger("click");
+	});
+	$(".buy_now_trigger_btn").on("click", function (e) {
+		e.preventDefault();
+		$(this).closest(".single_variation_wrap").find(".buy_now").trigger("click");
+	});
+
+	$(".share-whatsapp a").on("click", function (e) {
+		e.preventDefault();
+		let url = $(this).data("url");
+		if (url) {
+			window.open(url, "_blank", "noopener,noreferrer");
+		}
+	});
+
+	if ($("#slider").length && typeof $("#slider").slider === 'function') {
+		var $minPriceInput = $("input[name='min_price']");
+		var $maxPriceInput = $("input[name='max_price']");
+		var $minPriceDefInput = $("input[name='min_price_def']");
+		var $maxPriceDefInput = $("input[name='max_price_def']");
+
+		var min_price = $minPriceInput.length ? parseInt($minPriceInput.val(), 10) : 0;
+		var max_price = $maxPriceInput.length ? parseInt($maxPriceInput.val(), 10) : 1000;
+		var min_price_def = $minPriceDefInput.length ? parseInt($minPriceDefInput.val(), 10) : 0;
+		var max_price_def = $maxPriceDefInput.length ? parseInt($maxPriceDefInput.val(), 10) : 1000;
+
+		// Ensure min_price and max_price are within def bounds
+		min_price = Math.max(min_price_def, Math.min(max_price_def, isNaN(min_price) ? min_price_def : min_price));
+		max_price = Math.max(min_price_def, Math.min(max_price_def, isNaN(max_price) ? max_price_def : max_price));
+		if (min_price > max_price) min_price = max_price;
+
+
+		$("#slider").slider({
+			range: true,
+			min: min_price_def,
+			max: max_price_def,
+			values: [min_price, max_price],
+			slide: function (event, ui) {
+				if (ui.values) {
+					$(".from").val(ui.values[0]);
+					$(".to").val(ui.values[1]);
+					$(".min_val_text_0").html("₪" + ui.values[0]);
+					$(".min_val_text_1").html("₪" + ui.values[1]);
+				}
+			},
+		});
+
+		function updateSliderText() {
+			var values = $("#slider").slider("option", "values");
+			if (values) {
+				$(".min_val_text_0").html("₪" + values[0]);
+				$(".min_val_text_1").html("₪" + values[1]);
+			}
+		}
+
+		setTimeout(function () {
+			if (min_price_param && !isNaN(min_price_param) && max_price_param && !isNaN(max_price_param)) {
+				let currentMin = Math.max(min_price_def, Math.min(max_price_def, min_price_param));
+				let currentMax = Math.max(min_price_def, Math.min(max_price_def, max_price_param));
+				if (currentMin > currentMax) currentMin = currentMax;
+				$("#slider").slider({ values: [currentMin, currentMax] });
+			}
+			updateSliderText(); // Update text after potentially setting values
+		}, 400);
+
+		$(".ui-slider-handle").each(function (index) {
+			if (!$(this).find(".span_val_text").length) {
+				$(this).append('<span class="span_val_text min_val_text_' + index + '"></span>');
+			}
+		});
+		updateSliderText(); // Initial text
+
+		$(".from, .to").on("change", function () {
+			var val1 = parseInt($(".from").val(), 10);
+			var val2 = parseInt($(".to").val(), 10);
+			var currentValues = $("#slider").slider("option", "values");
+
+			if (!isNaN(val1) && $(this).hasClass('from')) {
+				$("#slider").slider("values", 0, Math.min(val1, currentValues[1]));
+			} else if (!isNaN(val2) && $(this).hasClass('to')) {
+				$("#slider").slider("values", 1, Math.max(val2, currentValues[0]));
+			}
+			updateSliderText();
+		});
+	}
+
+	if ($("body").hasClass("single-product") && window_width > 1024) {
+		var $window = $(window);
+		var $body = $("body");
+		var $footer = $("footer");
+		var $stickyElement = $("#social-float"); // Or the actual product box if that's what should be sticky near footer
+
+		if ($stickyElement.length && $footer.length) { // Ensure elements for sticky logic exist
+			$window.scroll(function () {
+				if (!$stickyElement.length || !$footer.length || !$footer.offset()) return; // Re-check inside scroll
+				var scroll = $window.scrollTop();
+				// Use checkOffset logic if #social-float is the primary sticky element controlled this way
+				// The logic below seems to be for a different sticky behavior
+				var footerActualOffset = $footer.offset().top;
+				var stickyElementHeight = $stickyElement.outerHeight();
+				var headerHeight = $("header.scrolled").length ? $("header.scrolled").outerHeight() : ($("header").length ? $("header").outerHeight() : 0);
+				var stopPoint = footerActualOffset - stickyElementHeight - headerHeight - 20; // 20px buffer
+
+				if (scroll >= (headerHeight + 30) && scroll < stopPoint) { // Start after header + some offset
+					$body.addClass("product_sticky_mode_new"); // Use a new class if this is different logic
+					// $stickyElement.css({'position': 'fixed', 'top': headerHeight + 'px'}); // Example fixed positioning
+				} else {
+					$body.removeClass("product_sticky_mode_new");
+					// $stickyElement.css({'position': '', 'top': ''});
+					// Handle collision with footer if product_sticky_mode_new makes it fixed
+					if (scroll >= stopPoint) {
+						// $body.addClass("product_sticky_at_bottom"); // Class to indicate it's at the stop point
+						// $stickyElement.css({'position': 'absolute', 'top': stopPoint - headerHeight + 'px'}); // Adjust top to simulate sticking before footer
+					} else {
+						// $body.removeClass("product_sticky_at_bottom");
+					}
+				}
+				checkOffset(); // Call the original checkOffset for its specific behavior
+			});
+		}
+	}
+}); // END FIRST DOCUMENT.READY
+
+/*************************************************
+ * SECOND DOCUMENT.READY (Dimension & Roll Calc)
+ *************************************************/
+jQuery(document).ready(function ($) {
+	var $cartForm = $('form.cart');
+	var $prodWidth = $('#prod_width');
+	var $prodHeight = $('#prod_height');
+	var $prodCoverage = $('#prod_coverage'); // CRUCIAL: This ID must be on the coverage input for roll products.
+
+	var requiresDimensions = $prodWidth.length > 0 || $prodHeight.length > 0 || $prodCoverage.length > 0;
+	var isRollProduct = $prodCoverage.length > 0; // This defines if it's a roll product.
+
+	if (requiresDimensions) {
+		$cartForm.addClass('dimensions-required');
+		$cartForm.addClass('price-invalid'); 
+		$('.single_add_to_cart_button, .add_to_cart_trigger_btn, .buy_now_trigger_btn, .buy_now').addClass('disabled');
+	}
+
+	$(".variations_form").on("found_variation.wc-variation-form", function (event, variation) {
+		if (variation && typeof variation.display_price !== 'undefined') {
+			$("#base_price").attr("data-base-price", variation.display_price);
+		} else if (variation && typeof variation.price_html !== 'undefined' && $(variation.price_html).find('.amount').length) {
+			// Fallback if display_price is not available but price_html is
+			let priceText = $(variation.price_html).find('.amount').first().text();
+			let parsedPrice = parseFloat(priceText.replace(/[^\d\.]/g, ""));
+			if (!isNaN(parsedPrice)) {
+				$("#base_price").attr("data-base-price", parsedPrice);
+			}
+		}
+		recalcFinalPrice();
+	});
+
+	$(".variations_form").on("reset_data.wc-variation-form", function () {
+		$("#base_price").attr("data-base-price", $("#base_price").data("default-price") || 0);
+		recalcFinalPrice();
+	});
+
+	// Listen to WooCommerce's own event for when variation selection might have updated price.
+	$( ".single_variation_wrap" ).on( "show_variation", function ( event, variation, purchasable ) {
+		// Price might be updated by WooCommerce, recalc our total.
+		setTimeout(function () { // Delay to ensure WC updates are rendered
+			recalcFinalPrice();
+		}, 150);
+	});
+	// Also listen to select changes as a fallback, debounced.
+	var variationChangeTimeout;
+	$(".variations_form select").on("change", function () {
+		clearTimeout(variationChangeTimeout);
+		variationChangeTimeout = setTimeout(function () {
+			recalcFinalPrice();
+		}, 200); 
+	});
+
+
+	$prodHeight.on("input", function () {
+		validate_height($(this).val());
+		recalcFinalPrice();
+	});
+	$prodWidth.on("input", function () {
+		validate_width($(this).val());
+		recalcFinalPrice();
+	});
+
+	$prodHeight.on("blur", function() { validate_height($(this).val()); });
+	$prodWidth.on("blur", function() { validate_width($(this).val()); });
+
+	var lastCoverage = $prodCoverage.val(); // Initialize lastCoverage
+	$prodCoverage.off("keyup input change focus").on("input change", function () {
+		var newCoverage = $(this).val();
+		// Call recalcFinalPrice even if newCoverage === lastCoverage because other factors might have changed.
+		// The internal validation in recalcFinalPrice handles if the value itself is valid.
+		recalcFinalPrice();
+		lastCoverage = newCoverage; 
+	});
+
+	// Comprehensive addon change listener
+	$cartForm.on("change input", ".wc-pao-addon input, .wc-pao-addon select, .wc-pao-addon textarea", function() {
+		recalcFinalPrice();
+	});
+
+	// Add mutation observer for the entire addons container
+	var addonsContainer = document.querySelector(".wc-pao-addons-container");
+	if (addonsContainer) {
+		let lastCorrectPrice = 0;
+		let priceCheckTimer = null;
+		
+		// Function to get the current calculated price
+		function getCurrentCalculatedPrice() {
+			// Get the last calculated price from recalcFinalPrice
+			const $finalPriceEl = $('.product-addon-totals .wc-pao-subtotal-line .price, #product-addons-total .wc-pao-subtotal-line .price').first();
+			if ($finalPriceEl.length) {
+				const priceText = $finalPriceEl.text().replace(/[^\d\.]/g, "");
+				return parseFloat(priceText) || 0;
+			}
+			return 0;
+		}
+		
+		const addonsObserver = new MutationObserver(function(mutations) {
+			// Check if price elements were modified
+			let priceChanged = false;
+			
+			mutations.forEach(function(mutation) {
+				const $target = $(mutation.target);
+				
+				// Check if the mutation affected price elements
+				if ($target.hasClass('price') || $target.hasClass('amount') || 
+				    $target.find('.price, .amount').length > 0 ||
+				    $target.closest('.wc-pao-subtotal-line, .wc-pao-col2').length > 0) {
+					priceChanged = true;
+				}
+			});
+			
+			if (priceChanged && !isUpdatingDisplay) {
+				// Clear any pending price check
+				if (priceCheckTimer) clearTimeout(priceCheckTimer);
+				
+				// Schedule immediate price verification
+				priceCheckTimer = setTimeout(function() {
+					// Get what the price should be
+					const correctPrice = window.lastCalculatedFinalPrice || lastCorrectPrice;
+					const correctBase = window.lastCalculatedBasePrice || 0;
+					const correctAddons = window.lastCalculatedAddons || [];
+					
+					if (correctPrice > 0) {
+						// Immediately force our correct price without waiting
+						isUpdatingDisplay = true;
+						
+						// Use requestAnimationFrame for immediate visual update
+						requestAnimationFrame(function() {
+							// Update all price displays directly
+							$('.product-addon-totals .wc-pao-subtotal-line .price, #product-addons-total .wc-pao-subtotal-line .price').each(function() {
+								const $el = $(this);
+								const currentText = $el.text().replace(/[^\d\.]/g, "");
+								const currentPrice = parseFloat(currentText) || 0;
+								
+								if (Math.abs(currentPrice - correctPrice) > 0.01) {
+									$el.html('<span class="woocommerce-Price-amount amount">' + correctPrice.toFixed(2) + '</span> <span class="woocommerce-Price-currencySymbol">₪</span>');
+								}
+							});
+							
+							// Update base price
+							$('.product-addon-totals li:first-child .wc-pao-col2 .amount').each(function() {
+								const $el = $(this);
+								$el.html(correctBase.toFixed(2) + ' <span class="woocommerce-Price-currencySymbol">₪</span>');
+							});
+							
+							// Update addon lines if needed
+							if (correctAddons.length > 0) {
+								// Remove incorrect addon lines
+								$('.product-addon-totals .wc-pao-addon-total-line').not('.limes-addon-line').remove();
+								
+								// Ensure our addon lines have correct prices
+								correctAddons.forEach(function(addon) {
+									const addonLabel = addon.label;
+									const addonFee = addon.fee;
+									
+									// Find the line with this label
+									let found = false;
+									$('.product-addon-totals .limes-addon-line').each(function() {
+										const $line = $(this);
+										const lineLabel = $line.find('.wc-pao-col1 strong').text().trim();
+										
+										if (lineLabel === addonLabel) {
+											found = true;
+											// Update price if different
+											const $priceEl = $line.find('.wc-pao-col2 .price');
+											$priceEl.html(addonFee.toFixed(2) + ' ₪');
+										}
+									});
+									
+									// If not found, add it
+									if (!found && addonFee > 0) {
+										const addonHTML = '<li class="wc-pao-addon-total-line limes-addon-line">' +
+											'<div class="wc-pao-col1"><strong>' + addonLabel + '</strong></div>' +
+											'<div class="wc-pao-col2"><span class="price">' + addonFee.toFixed(2) + ' ₪</span></div>' +
+											'</li>';
+										$('.product-addon-totals .wc-pao-subtotal-line').before(addonHTML);
+									}
+								});
+							}
+							
+							// Mark container as price verified
+							$('.wc-pao-addons-container').addClass('limes-price-verified');
+							
+							// Remove the class after a short time to allow future checks
+							setTimeout(function() {
+								$('.wc-pao-addons-container').removeClass('limes-price-verified');
+							}, 500);
+							
+							isUpdatingDisplay = false;
+						});
+					}
+				}, 0); // Immediate check - no delay
+			}
+		});
+		
+		// Observe the entire container for any changes
+		addonsOb

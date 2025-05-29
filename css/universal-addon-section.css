@@ -1,0 +1,397 @@
+/* ---------------------- Universal Addon Section ---------------------- */
+.universal-addon-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    display: none;
+}
+
+/* Prevent flickering by adding smooth transitions */
+.product-addon-totals .price,
+.product-addon-totals .amount,
+#product-addons-total .price,
+#product-addons-total .amount,
+.wc-pao-subtotal-line .price,
+.wc-pao-subtotal-line .amount {
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Hide prices during updates to prevent flicker */
+.product-addon-totals.limes-updating .price,
+.product-addon-totals.limes-updating .amount {
+    opacity: 0.7;
+}
+
+/* Ensure smooth transitions for addon lines */
+.product-addon-totals li {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Prevent layout shift during updates */
+.product-addon-totals {
+    min-height: 100px;
+}
+
+.product-addon-totals ul {
+    position: relative;
+}
+
+/* Force immediate price updates without animation during corrections */
+.wc-pao-addons-container .price,
+.wc-pao-addons-container .amount {
+    will-change: contents;
+}
+
+/* Hide addon plugin's price updates momentarily */
+.wc-pao-addons-container:not(.limes-price-verified) .wc-pao-addon-total-line:not(.limes-addon-line) {
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Ensure our prices are always visible */
+.limes-addon-line {
+    visibility: visible !important;
+    height: auto !important;
+}
+
+/* Loading overlay styles */
+.wc-pao-addons-container {
+    position: relative;
+    min-height: 200px; /* Prevent layout shift */
+}
+
+.addon-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: none;
+    z-index: 100;
+    border-radius: 8px;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.addon-loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.spinner-circle {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e0e0e0;
+    border-top: 3px solid #6C5B49;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    animation: fadeInScale 0.3s ease-out forwards, spin 0.8s linear 0.3s infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes fadeInScale {
+    0% { 
+        opacity: 0;
+        transform: scale(0.8) rotate(0deg);
+    }
+    100% { 
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.addon-loading-spinner span {
+    display: block;
+    font-family: 'Assistant', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: #6C5B49;
+}
+
+/* Hide price elements when loading */
+.wc-pao-addons-container.loading-active .product-addon-totals,
+.wc-pao-addons-container.loading-active #product-addons-total,
+.wc-pao-addons-container.loading-active .always-visible-final-price-label {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Hide WooCommerce Product Addons total initially */
+#product-addons-total,
+.product-addon-totals {
+    display: none;
+}
+
+.universal-addon-section .addon-section-header {
+    margin-bottom: 15px;
+}
+
+.universal-addon-section .addon-section-header h4 {
+    font-family: 'Assistant', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: #6C5B49;
+    margin: 0;
+}
+
+.universal-addon-section .addon-totals-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.universal-addon-section .addon-totals-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.universal-addon-section .addon-totals-list li:last-child {
+    border-bottom: none;
+}
+
+.universal-addon-section .addon-totals-list .final-price-line {
+    background: #f0f8ff;
+    padding: 15px 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 1.1em;
+    border: 2px solid #67DCFA;
+}
+
+.universal-addon-section .wc-pao-col1 {
+    flex: 1;
+    font-family: 'Assistant', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: #313236;
+}
+
+.universal-addon-section .wc-pao-col2 {
+    text-align: right;
+    font-weight: bold;
+}
+
+.universal-addon-section .wc-pao-col2 .price {
+    font-family: 'Assistant', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: #6C5B49;
+}
+
+.universal-addon-section .final-price-line .wc-pao-col1 {
+    color: #6C5B49;
+    font-size: 18px;
+}
+
+.universal-addon-section .final-price-line .wc-pao-col2 .price {
+    font-size: 18px;
+    color: #6C5B49;
+}
+
+.universal-addon-section .wc-pao-addon-total-line .wc-pao-col1 {
+    color: #7E624D;
+    font-weight: 500;
+}
+
+.universal-addon-section .wc-pao-addon-total-line .wc-pao-col2 .price {
+    color: #7E624D;
+}
+
+/* Loading States */
+.universal-addon-section.loading {
+    opacity: 0.8;
+}
+
+.universal-addon-section .addon-loading-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    color: #6C5B49;
+    font-family: 'Assistant', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.universal-addon-section .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e0e0e0;
+    border-top: 2px solid #6C5B49;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Form loading states */
+.cart.addon-calculating .universal-addon-section {
+    pointer-events: none;
+}
+
+.cart.addon-loading .wc-pao-addon-field {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Show sections when all required fields are complete */
+.cart.addon-section-visible .universal-addon-section,
+.cart.addon-section-visible #product-addons-total,
+.cart.addon-section-visible .product-addon-totals {
+    display: block;
+}
+
+/* Ensure sections stay hidden when fields are incomplete */
+.cart:not(.addon-section-visible) .universal-addon-section,
+.cart:not(.addon-section-visible) #product-addons-total,
+.cart:not(.addon-section-visible) .product-addon-totals {
+    display: none !important;
+}
+
+/* Hide section when price is invalid */
+.cart.price-invalid .universal-addon-section,
+.cart.price-invalid #product-addons-total,
+.cart.price-invalid .product-addon-totals {
+    display: none !important;
+}
+
+/* Mobile responsiveness */
+@media only screen and (max-width: 950px) {
+    .addon-loading-spinner {
+        transform: translate(-50%, -50%) scale(0.85);
+    }
+    
+    .spinner-circle {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .addon-loading-spinner span {
+        font-size: 14px;
+    }
+    .universal-addon-section {
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .universal-addon-section .addon-section-header h4 {
+        font-size: 18px;
+        text-align: center;
+    }
+    
+    .universal-addon-section .addon-totals-list li {
+        padding: 10px 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .universal-addon-section .wc-pao-col1,
+    .universal-addon-section .wc-pao-col2 {
+        width: 100%;
+        text-align: right;
+    }
+    
+    .universal-addon-section .final-price-line {
+        padding: 12px 8px;
+    }
+    
+    .universal-addon-section .final-price-line .wc-pao-col1,
+    .universal-addon-section .final-price-line .wc-pao-col2 .price {
+        font-size: 16px;
+    }
+    
+    .universal-addon-section .addon-loading-message {
+        padding: 20px 15px;
+        font-size: 14px;
+    }
+    
+    .universal-addon-section .loading-spinner {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+    }
+}
+
+@media only screen and (max-width: 650px) {
+    .universal-addon-section {
+        padding: 12px;
+        border-radius: 5px;
+    }
+    
+    .universal-addon-section .addon-section-header h4 {
+        font-size: 16px;
+    }
+    
+    .universal-addon-section .wc-pao-col1,
+    .universal-addon-section .wc-pao-col2 .price {
+        font-size: 14px;
+    }
+    
+    .universal-addon-section .final-price-line .wc-pao-col1,
+    .universal-addon-section .final-price-line .wc-pao-col2 .price {
+        font-size: 15px;
+    }
+    
+    .universal-addon-section .addon-loading-message {
+        padding: 15px 10px;
+        font-size: 13px;
+    }
+    
+    .universal-addon-section .loading-spinner {
+        width: 14px;
+        height: 14px;
+        margin-right: 6px;
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .universal-addon-section .addon-totals-list li {
+    direction: rtl;
+}
+
+[dir="rtl"] .universal-addon-section .wc-pao-col2 {
+    text-align: left;
+}
+
+[dir="rtl"] .universal-addon-section .loading-spinner {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+@media only screen and (max-width: 950px) {
+    [dir="rtl"] .universal-addon-section .wc-pao-col1,
+    [dir="rtl"] .universal-addon-section .wc-pao-col2 {
+        text-align: right;
+    }
+    
+    [dir="rtl"] .universal-addon-section .loading-spinner {
+        margin-left: 8px;
+    }
+}
+
+@media only screen and (max-width: 650px) {
+    [dir="rtl"] .universal-addon-section .loading-spinner {
+        margin-left: 6px;
+    }
+}
+/* --------------------- /Universal Addon Section ---------------------- */

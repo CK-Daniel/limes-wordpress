@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Loading Overlay Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            direction: rtl;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>בדיקת תיקון Loading Overlay</h1>
+    
+    <div class="test-section">
+        <h2>סיכום השינויים</h2>
+        <div class="status success">
+            <strong>✓ תוקן בהצלחה:</strong> Loading overlay יעבוד כעת גם עבור מוצרי מטר רבוע
+        </div>
+        
+        <h3>השינויים שבוצעו:</h3>
+        <ol>
+            <li><strong>עדכון product-addons-integration.js:</strong>
+                <ul>
+                    <li>הפונקציה <code>showAddonLoading()</code> יוצרת כעת container זמני אם אין container קיים</li>
+                    <li>ה-overlay יופיע גם כאשר השדות הנדרשים (צבע, מנגנון, התקנה) עדיין לא נבחרו</li>
+                    <li>ה-container הזמני נמחק אוטומטית לאחר סיום הטעינה</li>
+                </ul>
+            </li>
+            <li><strong>עדכון משך הזמן המינימלי:</strong>
+                <ul>
+                    <li>שונה מ-3 שניות ל-1.5 שניות כפי שביקשת</li>
+                    <li>עודכן גם ב-main.js וגם ב-product-addons-integration.js</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>איך זה עובד כעת</h2>
+        <div class="status info">
+            <strong>למוצרי מטר רבוע (SQM):</strong>
+        </div>
+        <ol>
+            <li>כאשר המשתמש מזין רוחב/גובה - מופיע loading overlay מיד</li>
+            <li>ה-overlay נשאר לפחות 1.5 שניות (גם אם החישוב מהיר יותר)</li>
+            <li>זה עובד גם אם טרם נבחרו צבע/מנגנון/התקנה</li>
+            <li>לאחר שכל השדות מולאו - מופיעה טבלת האדונים עם המחירים</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>דרכי בדיקה</h2>
+        <p>כדי לבדוק שהתיקון עובד:</p>
+        <ol>
+            <li>היכנס לעמוד מוצר מסוג מטר רבוע</li>
+            <li>הזן ערכים בשדות רוחב וגובה</li>
+            <li>וודא שמופיע loading spinner עם הטקסט "מחשב מחיר..."</li>
+            <li>וודא שה-spinner מסתובב ונשאר לפחות 1.5 שניות</li>
+            <li>לאחר מכן בחר צבע, צד מנגנון וסוג התקנה</li>
+            <li>וודא שטבלת האדונים מופיעה עם המחירים הנכונים</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>פתרון בעיות</h2>
+        <p>אם ה-loading overlay עדיין לא מופיע:</p>
+        <ol>
+            <li>נקה את cache הדפדפן (Ctrl+Shift+R)</li>
+            <li>בדוק בקונסול אם יש שגיאות JavaScript</li>
+            <li>וודא שהקבצים המעודכנים נטענו (בדוק את הגרסה בכרטיסיית Network)</li>
+        </ol>
+        
+        <div class="status info">
+            <strong>טיפ:</strong> פתח את הקונסול (F12) וחפש את ההודעה:<br>
+            <code>📦 Creating temporary loading container for dimension product</code><br>
+            זה מאשר שהתיקון עובד.
+        </div>
+    </div>
+</body>
+</html>
