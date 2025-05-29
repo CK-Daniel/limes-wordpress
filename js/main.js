@@ -557,6 +557,16 @@ jQuery(document).ready(function ($) {
 
 	$prodHeight.on("blur", function() { validate_height($(this).val()); });
 	$prodWidth.on("blur", function() { validate_width($(this).val()); });
+	
+	// Add event handlers for coverage field (roll products)
+	if ($prodCoverage.length > 0) {
+		$prodCoverage.on("input", function() {
+			recalcFinalPrice();
+		});
+		$prodCoverage.on("blur", function() {
+			recalcFinalPrice();
+		});
+	}
 
 	var lastCoverage = $prodCoverage.val(); // Initialize lastCoverage
 	$prodCoverage.off("keyup input change focus").on("input change", function () {
@@ -988,7 +998,8 @@ jQuery(document).ready(function ($) {
 		// Calculate the actual product price
 		if (isRollProduct && $prodCoverage.length > 0 && coverage > 0) {
 			if (rollWidth > 0 && rollLength > 0) {
-				var rollAreaPerUnit = (rollWidth / 100) * (rollLength / 100); 
+				// Roll dimensions are already in meters from ACF
+				var rollAreaPerUnit = rollWidth * rollLength; 
 				if (rollAreaPerUnit <= 0) rollAreaPerUnit = 1; 
 				var coverage_with_margin = coverage * 1.05;
 				var rollsNeeded = Math.ceil(coverage_with_margin / rollAreaPerUnit);

@@ -228,10 +228,11 @@ class Limes_Price_Calculator {
         }
 
         $product_id = $data['variation_id'] ? $data['product_id'] : $data['product_id'];
-        $roll_width_cm = (float) get_field('roll_width', $product_id);
-        $roll_length_cm = (float) get_field('roll_length', $product_id);
+        // Roll dimensions are stored in meters in ACF
+        $roll_width_m = (float) get_field('roll_width', $product_id);
+        $roll_length_m = (float) get_field('roll_length', $product_id);
 
-        if ($roll_width_cm <= 0 || $roll_length_cm <= 0) {
+        if ($roll_width_m <= 0 || $roll_length_m <= 0) {
             throw new Exception('Invalid roll dimensions');
         }
 
@@ -240,8 +241,8 @@ class Limes_Price_Calculator {
         $margin_percentage = $settings['margin_percentage'];
         $coverage_with_margin = $coverage_needed * (1 + $margin_percentage / 100);
 
-        // Calculate roll area
-        $roll_area_m2 = ($roll_width_cm / 100) * ($roll_length_cm / 100);
+        // Calculate roll area (already in meters)
+        $roll_area_m2 = $roll_width_m * $roll_length_m;
 
         // Calculate rolls needed
         $rolls_needed = ceil($coverage_with_margin / $roll_area_m2);

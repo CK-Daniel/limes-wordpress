@@ -102,7 +102,8 @@ jQuery(document).ready(function($) {
                 var rollLength = parseFloat($("#roll_length").val()) || 0;
                 
                 if (coverage > 0 && rollWidth > 0 && rollLength > 0) {
-                    var rollArea = (rollWidth / 100) * (rollLength / 100);
+                    // Roll dimensions are already in meters from ACF
+                    var rollArea = rollWidth * rollLength;
                     if (rollArea < 1) rollArea = 1;
                     
                     // Add 5% margin
