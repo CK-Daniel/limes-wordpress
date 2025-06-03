@@ -378,12 +378,26 @@ function ensure_price_display_container() {
                     <!-- Base product line for products without addons -->
                     <li>
                         <div class="wc-pao-col1"><strong><span>x 1</span> <?php echo esc_html($product_name); ?></strong></div>
-                        <div class="wc-pao-col2"><strong><span class="amount"><?php echo wc_price($product->get_price()); ?></span></strong></div>
+                        <div class="wc-pao-col2"><strong><span class="amount"><?php 
+                            // For roll products, show placeholder price until JS calculates
+                            if ($product_type_dimensions === 'roll') {
+                                echo '<span class="calculating-price">מחשב...</span>';
+                            } else {
+                                echo wc_price($product->get_price());
+                            }
+                        ?></span></strong></div>
                     </li>
                     <?php endif; ?>
                     <!-- Final price line (always present) -->
                     <li class="wc-pao-subtotal-line">
-                        <p class="price"><?php echo wc_price($product->get_price()); ?></p>
+                        <p class="price"><?php 
+                            // For roll products, show placeholder price until JS calculates
+                            if ($product_type_dimensions === 'roll') {
+                                echo '<span class="calculating-price">מחשב...</span>';
+                            } else {
+                                echo wc_price($product->get_price());
+                            }
+                        ?></p>
                     </li>
                 </ul>
             </div>

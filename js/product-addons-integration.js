@@ -5,10 +5,34 @@
  * and the official WooCommerce Product Addons plugin.
  */
 jQuery(document).ready(function($) {
+    // Fix wrong prices immediately on DOM ready
+    function fixWrongAddonPrices() {
+        $('.wc-pao-addons-container .amount').each(function() {
+            var $el = $(this);
+            var priceText = $el.text();
+            var price = parseFloat(priceText.replace(/[^\d\.]/g, "")) || 0;
+            
+            // Check for suspiciously high prices (over 10,000)
+            if (price > 10000) {
+                console.log('🚨 Found wrong price in addon container:', price, '- fixing immediately');
+                $el.html('<span class="calculating-price">מחשב...</span>');
+                
+                // Mark container for recalculation
+                $el.closest('.wc-pao-addons-container').addClass('needs-price-fix');
+            }
+        });
+    }
+    
+    // Run fix immediately
+    fixWrongAddonPrices();
+    
     // Wait for the page to fully load
     $(window).on('load', function() {
         // Only run on product pages
         if (!$('body').hasClass('single-product')) return;
+        
+        // Run fix again after page load
+        fixWrongAddonPrices();
         
         // Cache selectors
         var $cartForm = $('form.cart');
@@ -92,6 +116,7 @@ jQuery(document).ready(function($) {
                 basePrice = parseFloat($basePrice.data("base-price")) || 0;
             }
             
+            console.log('🔍 calculateDimensionalPrice - Base price:', basePrice);
             
             // Default to base price
             var adjustedPrice = basePrice;
@@ -101,6 +126,13 @@ jQuery(document).ready(function($) {
                 var coverage = parseFloat($prodCoverage.val()) || 0;
                 var rollWidth = parseFloat($("#roll_width").val()) || 0;
                 var rollLength = parseFloat($("#roll_length").val()) || 0;
+                
+                console.log('🔍 Roll calculation:', {
+                    coverage: coverage,
+                    rollWidth: rollWidth,
+                    rollLength: rollLength,
+                    basePrice: basePrice
+                });
                 
                 if (coverage > 0 && rollWidth > 0 && rollLength > 0) {
                     // Roll dimensions are in centimeters from ACF, convert to square meters
@@ -115,6 +147,13 @@ jQuery(document).ready(function($) {
                     
                     adjustedPrice = basePrice * rollsNeeded;
                     $("#prod_rolls_needed").val(rollsNeeded);
+                    
+                    console.log('🔍 Roll calculation result:', {
+                        rollArea: rollArea,
+                        coverage_with_margin: coverage_with_margin,
+                        rollsNeeded: rollsNeeded,
+                        adjustedPrice: adjustedPrice
+                    });
                 }
             } else { // SQM or RM
                 var width = parseFloat($prodWidth.val()) || 0;
@@ -140,6 +179,8 @@ jQuery(document).ready(function($) {
             if (minPrice > 0 && adjustedPrice < minPrice) {
                 adjustedPrice = minPrice;
             }
+            
+            console.log('🔍 calculateDimensionalPrice - Final adjusted price:', adjustedPrice);
             
             return adjustedPrice;
         }
@@ -607,12 +648,29 @@ jQuery(document).ready(function($) {
                 
                 // Get product information
                 const productName = $('h1.product-title').text().trim() || $('.product_title').text().trim();
-                const productPrice = calculateDimensionalPrice();
+                let productPrice = calculateDimensionalPrice();
+                
+                // For roll products without coverage entered yet, show placeholder
+                const isRollProduct = $prodCoverage.length > 0;
+                const coverageEntered = parseFloat($prodCoverage.val()) > 0;
                 
                 // Check if this product has actual addons
                 const hasAddons = $('.wc-pao-addon-field').length > 0;
                 
                 // Create the container structure - hide it initially for products without addons
+                let priceDisplay;
+                if (isRollProduct && !coverageEntered) {
+                    priceDisplay = '<span class="calculating-price">מחשב...</span>';
+                } else {
+                    // Sanity check - if price is suspiciously high, show placeholder
+                    if (productPrice > 10000) {
+                        console.warn('⚠️ Suspicious price detected in ensureAddonContainerForAllProducts:', productPrice);
+                        priceDisplay = '<span class="calculating-price">מחשב...</span>';
+                    } else {
+                        priceDisplay = `${productPrice.toFixed(2)} <span class="woocommerce-Price-currencySymbol">₪</span>`;
+                    }
+                }
+                
                 const containerHtml = `
                     <div class="wc-pao-addons-container" ${!hasAddons ? 'style="display: none;"' : ''}>
                         <div id="product-addons-total" data-show-incomplete-sub-total="" data-show-sub-total="1" data-type="variable" data-tax-mode="excl" data-tax-display-mode="excl">
@@ -620,10 +678,10 @@ jQuery(document).ready(function($) {
                                 <ul>
                                     <li>
                                         <div class="wc-pao-col1"><strong><span>x 1</span> ${productName}</strong></div>
-                                        <div class="wc-pao-col2"><strong><span class="amount">${productPrice.toFixed(2)} <span class="woocommerce-Price-currencySymbol">₪</span></span></strong></div>
+                                        <div class="wc-pao-col2"><strong><span class="amount">${priceDisplay}</span></strong></div>
                                     </li>
                                     <li class="wc-pao-subtotal-line">
-                                        <p class="price"><span class="woocommerce-Price-amount amount">${productPrice.toFixed(2)}</span> <span class="woocommerce-Price-currencySymbol">₪</span></p>
+                                        <p class="price"><span class="woocommerce-Price-amount amount">${priceDisplay}</span></p>
                                     </li>
                                 </ul>
                             </div>
@@ -663,6 +721,36 @@ jQuery(document).ready(function($) {
         
         // For products without addons, ensure the container structure exists
         ensureAddonContainerForAllProducts();
+        
+        // Fix wrong addon prices on page load
+        fixWrongAddonPrices();
+        
+        /**
+         * Fix wrong addon prices that might be shown initially
+         */
+        function fixWrongAddonPrices() {
+            // Check for suspiciously high prices in addon containers
+            $('.product-addon-totals .amount').each(function() {
+                const $amount = $(this);
+                const priceText = $amount.text().replace(/[^\d\.]/g, '');
+                const price = parseFloat(priceText);
+                
+                // If price is over 10,000, it's likely wrong
+                if (price > 10000) {
+                    console.warn('🚨 Detected wrong price in addon container:', price);
+                    
+                    // Replace with placeholder until proper calculation
+                    $amount.html('<span class="calculating-price">מחשב...</span>');
+                    
+                    // Trigger recalculation after a short delay
+                    setTimeout(function() {
+                        if ($prodCoverage.length > 0 && parseFloat($prodCoverage.val()) > 0) {
+                            updateProductPriceForAddons();
+                        }
+                    }, 500);
+                }
+            });
+        }
         
         /**
          * Clean up duplicate final price labels
@@ -707,6 +795,42 @@ jQuery(document).ready(function($) {
             });
         }
         
+        // Set up mutation observer to catch dynamically added addon containers
+        const addonObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) { // Element node
+                            const $node = $(node);
+                            
+                            // Check if this is an addon container or contains one
+                            if ($node.hasClass('wc-pao-addons-container') || $node.find('.wc-pao-addons-container').length > 0) {
+                                console.log('🔍 New addon container detected via mutation observer');
+                                
+                                // Fix wrong prices immediately
+                                setTimeout(function() {
+                                    fixWrongAddonPrices();
+                                    
+                                    // If marked as needing fix, recalculate
+                                    if ($('.wc-pao-addons-container.needs-price-fix').length > 0) {
+                                        updateProductPriceForAddons();
+                                    }
+                                }, 10);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Start observing the form for changes
+        if ($cartForm.length > 0) {
+            addonObserver.observe($cartForm[0], {
+                childList: true,
+                subtree: true
+            });
+        }
+        
         // Run initial calculation
         setTimeout(updateProductPriceForAddons, 300);
         
@@ -714,6 +838,25 @@ jQuery(document).ready(function($) {
         $(window).on('load', function() {
             // Create the addon totals container again to ensure it exists
             createInitialAddonTotals();
+            
+            // For roll products, immediately recalculate to fix any wrong initial prices
+            if ($prodCoverage.length > 0) {
+                console.log('🔧 Roll product detected - fixing initial addon container price');
+                
+                // Check if we have an incorrectly high price (like 3780000)
+                $('.product-addon-totals .amount').each(function() {
+                    var $el = $(this);
+                    var currentPrice = parseFloat($el.text().replace(/[^\d\.]/g, "")) || 0;
+                    
+                    if (currentPrice > 10000) { // Suspiciously high price
+                        console.log('⚠️ Found suspiciously high price:', currentPrice, '- will recalculate');
+                        $el.html('<span class="calculating-price">מחשב...</span>');
+                    }
+                });
+                
+                // Force immediate recalculation
+                updateProductPriceForAddons();
+            }
             
             // Then update it with the calculated price
             setTimeout(updateProductPriceForAddons, 500);

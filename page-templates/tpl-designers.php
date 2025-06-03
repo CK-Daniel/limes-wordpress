@@ -4,7 +4,7 @@
     $des_top_text = get_field( 'designers_top_text' );
     $des_main_img = get_field( 'designers_main_img' );
     $designers_ids = get_field( 'designers_ids' );
-    $designers_loop = get_all_designers( $designers_ids );
+    $designers_loop = limes_get_all_designers( $designers_ids );
     $des_team_title = get_field( 'designers_team_title' ); 
     $des_main_title = get_field( 'designers_main_title' );
 

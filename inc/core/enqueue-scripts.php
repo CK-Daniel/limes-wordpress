@@ -54,6 +54,9 @@ function limes_enqueue_scripts() {
         wp_enqueue_script('product-addons-integration', get_template_directory_uri() . '/js/product-addons-integration.js', array('jquery'), '1.0.0', true);
         wp_enqueue_script('woocommerce-validation-fix', get_template_directory_uri() . '/js/woocommerce-validation-fix.js', array('jquery', 'wc-add-to-cart-variation'), '1.0.0', true);
         
+        // Roll price fix - must run after all other scripts
+        wp_enqueue_script('roll-price-fix', get_template_directory_uri() . '/js/woocommerce/roll-price-fix.js', array('jquery', 'product-addons-integration'), '1.0.0', true);
+        
         // Universal addon section styles
         wp_enqueue_style('universal-addon-section', get_template_directory_uri() . '/css/universal-addon-section.css', array(), '1.0.0', false);
         
