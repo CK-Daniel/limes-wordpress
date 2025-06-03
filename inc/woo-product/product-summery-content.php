@@ -46,7 +46,12 @@
     </div>
     <?php endif; ?>
     <div class="prod_whatsapp">
-        <a aria-label="Chat on WhatsApp" href="https://wa.me/<?php echo $whatsapp_num; ?>" target="_blank">
+        <?php 
+        $product_url = get_permalink();
+        $product_title = get_the_title();
+        $whatsapp_message = urlencode("שלום, אני מעוניין/ת במוצר: " . $product_title . " - " . $product_url);
+        ?>
+        <a aria-label="Chat on WhatsApp" href="https://wa.me/<?php echo $whatsapp_num; ?>?text=<?php echo $whatsapp_message; ?>" target="_blank">
             <img src="<?php echo get_template_directory_uri() ?>/images/whatsapp_icon.png" alt="whatsapp_icon">
             <span><?php echo $whatsapp_num_text; ?></span>
         </a>
