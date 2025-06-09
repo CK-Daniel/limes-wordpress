@@ -504,12 +504,14 @@ jQuery(document).ready(function($) {
                 return false;
             }
             
-            // Make sure variation is selected for variable products
-            if ($form.hasClass('variations_form')) {
-                var variationId = $form.find('input[name="variation_id"]').val();
-                if (!variationId || variationId === '0') {
+            // Check for color selection specifically
+            var $colorRadios = $('input[name="attribute_pa_color"]');
+            if ($colorRadios.length > 0) {
+                // Check if any color radio is selected
+                var colorSelected = $colorRadios.is(':checked');
+                if (!colorSelected) {
                     e.preventDefault();
-                    alert('אנא בחר וריאציה');
+                    alert('אנא בחר גוון');
                     // Reset processing flag after a short delay to prevent alert loop
                     setTimeout(function() {
                         $('.single_add_to_cart_button').data('processing', false);
@@ -517,6 +519,9 @@ jQuery(document).ready(function($) {
                     return false;
                 }
             }
+            
+            // Note: Removed general variation validation as requested
+            // Only color selection validation remains for variations
             
             // Force recalculation of price before submission
             updateProductPriceForAddons();

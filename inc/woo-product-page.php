@@ -704,43 +704,26 @@ jQuery(document).ready(function($) {
                 $form.removeClass('price-invalid');
             }
             
-            // Make sure variation is selected
-            if ($form.hasClass('variations_form')) {
-                // Check if variation is selected using multiple methods
-                var variationSelected = false;
-                
-                // Method 1: Check for variation_id input
-                if ($('input[name="variation_id"]').length && $('input[name="variation_id"]').val()) {
-                    variationSelected = true;
-                }
-                
-                // Method 2: Check if a variation is selected in the dropdown
-                if ($('select[name^="attribute_"]').length) {
-                    var allSelected = true;
-                    $('select[name^="attribute_"]').each(function() {
-                        if (!$(this).val()) {
-                            allSelected = false;
-                        }
-                    });
-                    if (allSelected) {
-                        variationSelected = true;
-                    }
-                }
-                
-                // Method 3: Check if a radio button is selected
-                if ($('input[type="radio"][name^="attribute_"]:checked').length) {
-                    variationSelected = true;
-                }
-                
-                // If no variation is selected, show alert
-                if (!variationSelected) {
-                    alert('אנא בחר וריאציה');
+            // Check for color selection specifically
+            var $colorRadios = $('input[name="attribute_pa_color"]');
+            if ($colorRadios.length > 0) {
+                // Check if any color radio is selected
+                var colorSelected = $colorRadios.is(':checked');
+                if (!colorSelected) {
+                    alert('אנא בחר גוון');
                     // Reset processing flag after a short delay to prevent alert loop
                     setTimeout(function() {
                         $('.add_to_cart_trigger_btn').data('processing', false);
                     }, 500);
                     return;
                 }
+            }
+            
+            // Note: Removed general variation validation as requested
+            // Only color selection validation remains for variations
+            
+            // Continue with variation form handling if needed
+            if ($form.hasClass('variations_form')) {
                 
                 // Add the variation ID to the form if it's not already there
                 if (!$('input[name="variation_id"]').length) {

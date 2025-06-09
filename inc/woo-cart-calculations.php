@@ -495,36 +495,46 @@ function add_dimensional_price_calculator_js() {
         function areFieldsValid() {
             // First check if this is a variable product and if variation is selected
             if ($form.hasClass('variations_form')) {
-                var variationSelected = false;
+                // Check if color attribute exists on this product
+                var hasColorAttribute = $('input[name="attribute_pa_color"]').length > 0 || 
+                                       $('select[name="attribute_pa_color"]').length > 0;
                 
-                // Check color attribute selection (both radio and select)
-                var colorSelected = $('input[name="attribute_pa_color"]:checked').val() || 
-                                   $('select[name="attribute_pa_color"]').val();
-                
-                if (!colorSelected) {
-                    console.log('🛑 Color variation not selected yet');
-                    return false; // Don't show price until color is selected
+                if (hasColorAttribute) {
+                    // Check color attribute selection (both radio and select)
+                    var colorSelected = $('input[name="attribute_pa_color"]:checked').val() || 
+                                       $('select[name="attribute_pa_color"]').val();
+                    
+                    if (!colorSelected) {
+                        console.log('🛑 Color variation not selected yet');
+                        return false; // Don't show price until color is selected
+                    }
+                    
+                    console.log('✅ Color variation selected:', colorSelected);
                 }
-                
-                console.log('✅ Color variation selected:', colorSelected);
             }
             
-            // Check required mechanism and installation fields (only for non-roll products)
-            if (productType !== 'roll') {
+            // Check required mechanism and installation fields (only for products that have them)
+            var hasMechanismField = $('input[name="prod_radio-gr2"]').length > 0;
+            var hasInstallationField = $('input[name="prod_radio-gr1"]').length > 0;
+            
+            if (hasMechanismField) {
                 var mechanismSelected = $('input[name="prod_radio-gr2"]:checked').length > 0;
-                var installationSelected = $('input[name="prod_radio-gr1"]:checked').length > 0;
-                
                 if (!mechanismSelected) {
                     console.log('🛑 Mechanism side not selected yet');
                     return false;
                 }
-                
+            }
+            
+            if (hasInstallationField) {
+                var installationSelected = $('input[name="prod_radio-gr1"]:checked').length > 0;
                 if (!installationSelected) {
                     console.log('🛑 Installation type not selected yet');
                     return false;
                 }
-                
-                console.log('✅ Mechanism and installation selected');
+            }
+            
+            if (hasMechanismField || hasInstallationField) {
+                console.log('✅ Required selection fields are complete');
             }
             
             // Now check dimension fields based on product type
